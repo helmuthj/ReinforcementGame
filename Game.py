@@ -83,7 +83,7 @@ class HumanPlayerInterface:
         validmove = False
         while not validmove:
             move = int(self._screen.requestInput(self._name + ' zieht: ', self._playerNumber))
-            validmove = self._board.placeMove(move)
+            validmove = self._board.checkAndPlaceMove(move)
 
 
     # sendReward() is needed, because a reward is not only given to the player who wins (which is apparent

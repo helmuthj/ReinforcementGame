@@ -121,7 +121,7 @@ class HumanPlayerInterface:
         moveisvalid = False
         while not moveisvalid:
             move = int(self._screen.requestInput(self._name + ' zieht: ', self._playerNumber))
-            moveisvalid = self._board.placeMove(move)
+            moveisvalid = self._board.checkAndPlaceMove(move)
         self._lastmove = move
 
     # sendReward() is needed, because a reward is not only given to the player who wins (which is apparent
@@ -177,7 +177,7 @@ class DumbAI:
         forbiddenmoves = []
         while not moveisvalid:
             tentativeMove = self.chooseMove(forbiddenmoves)
-            moveisvalid = self._board.placeMove(tentativeMove)
+            moveisvalid = self._board.checkAndPlaceMove(tentativeMove)
             if not moveisvalid:
                 forbiddenmoves.append(tentativeMove)
         self._movehist.append(tentativeMove)
