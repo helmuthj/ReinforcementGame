@@ -490,7 +490,7 @@ if __name__ == '__main__':
     #pr = cProfile.Profile()
     #pr.enable()
 
-    practice(250000)
+    practice(100000)
     #wrapper(cursesgame)
 
     #pr.disable()

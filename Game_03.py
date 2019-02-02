@@ -415,8 +415,8 @@ def cursesgame(scr):
     lam = 0.0
     ql0 = Qlearner('Q0.pkl', range(1, 10), alpha, lam)
     ql1 = Qlearner('Q1.pkl', range(1, 10), alpha, lam)
-    #pls = [HumanPlayerInterface('Spieler', b, gs), SmartAI('Smart AI', b, None, ql1, 10)]
-    pls = [HumanPlayerInterface('Lotte', b, gs), HumanPlayerInterface('Jo', b, gs)]
+    pls = [HumanPlayerInterface('Janne', b, gs), SmartAI('Smart AI', b, None, ql1, 10)]
+    #pls = [HumanPlayerInterface('Janne', b, gs), HumanPlayerInterface('Jo', b, gs)]
     b.setplayers(pls)
 
     while 1:
