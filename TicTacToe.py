@@ -9,6 +9,7 @@ class TicTacToe:
         - places their moves on the board and manages state transitions of the board
         - checks after each move if the board is in a terminal states
         - sends rewards to players
+        - knows a game-specific visualizer that it can ask to display state and messages
     '''
 
     # class-level constants for rewards
@@ -23,14 +24,14 @@ class TicTacToe:
     MARKED_PL1 = 1
     UNMARKED = 2
 
-    # class level game status constant
+    # class-level game status constant
     NOT_READY = -2
     READY = -1
     WIN_PL0 = 0
     WIN_PL1 = 1
     DRAW = 2
 
-    def __init__(self):
+    def __init__(self, visualizer):
         self.winners = ((0, 1, 2), (3, 4, 5), (6, 7, 8),
                         (0, 3, 6), (1, 4, 7), (2, 5, 8),
                         (0, 4, 8), (6, 4, 2))
@@ -38,6 +39,7 @@ class TicTacToe:
         self._status = TicTacToe.NOT_READY
         self._whosturn = None
         self._players = None
+        self._visualizer = visualizer
 
     def setplayers(self, players):
         self._players = players
@@ -49,6 +51,7 @@ class TicTacToe:
         self._whosturn = 0
         self._status = TicTacToe.READY
 
+    # TODO: This loop could go into a separate class, the "game manager".
     def play(self):
         '''
         Main "game loop"
@@ -59,6 +62,10 @@ class TicTacToe:
         while self._status == TicTacToe.READY:
             # Request move from active player as long as invalid moves are selected
             while 1:
+                message = self._players[self._whosturn].requestTurnMessage()
+                if message is not None:
+                    self._visualizer.sendMessage(message)
+
                 move = self._players[self._whosturn].turn()
                 # Valid moves change the board state
                 if self.checkAndPlaceMove(move):
@@ -74,10 +81,28 @@ class TicTacToe:
             # After each move, send rewards where appropriate
             self.checkRewards()
 
+            # After each move, ask players if they want to see the state
+            for player in self._players:
+                if player.doYouNeedVisualization():
+                    self._visualizer.visualizeState(self._boardstate)
+                    break
+
             # give turn to next player in cycle
             self._whosturn = (self._whosturn + 1) % 2
 
-        # When the game is finished, let the players do "clean up" operations
+        # End of while loop: Now the game is finished.
+        # Ask the players if they want to see a message
+        for idx, player in enumerate(self._players):
+            if player.doYouNeedMessage():
+                if self._status == idx:
+                    message = player.name + ' hat gewonnen!\n'
+                elif self._status == TicTacToe.DRAW:
+                    message = player.name + ' hat ein Unentschieden geholt!\n'
+                else:
+                    message = player.name + ' hat leider verloren!\n'
+                self._visualizer.writeMessage(message, player.playerNumber)
+
+        # Let the players do "clean up" operations
         for player in self._players:
             player.finalize()
 
