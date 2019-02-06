@@ -13,25 +13,25 @@ class HumanPlayerInterface:
     Question: Should the player know the screen?
     Pros:
         - It makes messages easier
-        - The game board need not distinguish between AI and human (or ask them if they want to see
-          a message)
-        - How to handle keyboard inputs from the "screen"?
+        - The game board need not distinguish between AI and human
+        (however the game will ask Players if the want to know about game updates, because otherwise
+        human players might not see what is happening until they are asked again to make a move)
+        - Easy to handle keyboard inputs from the "screen"
     Con:
         - Coupling
-
-    TODO: Number 1 priority is to figure out how to collect input in a clean way WITHOUT having to
-    TODO: know the screen here.
+    Decision:
+        The player handles his own I/O device, the game should not bother.
     '''
 
-    def __init__(self, somename, someboard, somescreen, playerNumber):
+    def __init__(self, somename, someboard, somescreen):
         self._name = somename
-        self._board = someboard
         self._screen = somescreen
         self._boardstate = None
-        self._symbols = ['o', 'x', '-']  # REMOVE
+        self._watchesState = True
+        self._readsMessages = True
         self._reward = None
-        self._playerNumber = playerNumber
-        #self._playerNumber = self._screen.getPlayerLine()  # WHY DO I NEED THIS LINE THING?
+        # The screen tells the player once where it should send its messages to
+        self._playerNumber = self._screen.getPlayerLine()
 
     @property
     def name(self):
@@ -41,12 +41,16 @@ class HumanPlayerInterface:
     def playerNumber(self):
         return self._playerNumber
 
-    # TODO: rebuild this using the visualizer. Problem: how do I collect the user input?
-    # TODO: turn() should ideally wrap the decision-making.
+    @property
+    def watchesState(self):
+        return self._watchesState
+
+    @property
+    def readsMessages(self):
+        return self._readsMessages
+
     def turn(self):
-        # when asked to make a move, ask for the state, analyze it, decide, return move
-        self._boardstate = self._board.returnState()
-        self.visualizeState()
+        # Only handle "technically" incorrect inputs here. Rule violations are handled by the game.
         while 1:
             try:
                 move = int(self._screen.requestInput(self._name + ' zieht: ', self._playerNumber))
@@ -58,33 +62,15 @@ class HumanPlayerInterface:
     def sendReward(self, reward, resultingState):
         self._reward = reward
 
-    def finalize(self):  # REMOVE the message bit
-        self._boardstate = self._board.returnState()
-        self.visualizeState()
-        if self._reward == self._board.R_WIN:
-            self._screen.putMessage('Oh, ich (' + self._name + ') habe gewonnen!\n', self._playerNumber)
-        elif self._reward == self._board.R_DRAW:
-            self._screen.putMessage('Hm, ich (' + self._name + ') habe ein Unentschieden geholt!\n', self._playerNumber)
-        elif self._reward == self._board.R_DEFEAT:
-            self._screen.putMessage('Mist, ich (' + self._name + ') habe verloren!\n', self._playerNumber)
+    def setState(self, state):
+        self._boardstate = state
+        self._screen.visualizeState(self._boardstate)
 
-    def visualizeState(self):  # REMOVE
-        lines = []
-        line = ''
-        for idx in range(6, 9):
-            line += self._symbols[self._boardstate[idx]]
-        lines.append(line)
-        line = ''
-        for idx in range(3, 6):
-            line += self._symbols[self._boardstate[idx]]
-        lines.append(line)
-        line = ''
-        for idx in range(0, 3):
-            line += self._symbols[self._boardstate[idx]]
-        lines.append(line)
+    def sendMessage(self, message):
+        self._screen.putMessage(message, self._playerNumber)
 
-        self._screen.putBoard(lines)
-
+    def finalize(self):
+        pass
 
 class DumbAI:
 
@@ -97,7 +83,8 @@ class DumbAI:
         self._action = None
 
     def turn(self):
-        # when asked to make a move, ask for the state, make smart bet, return move, store state and action
+        # when asked to make a move, ask for the state, make smart bet,
+        # return move, store state and action
         self._boardstate = self._board.returnState()
         self._action = self.chooseAction(None)
         return self._action

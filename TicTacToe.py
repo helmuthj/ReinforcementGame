@@ -60,12 +60,11 @@ class TicTacToe:
 
         # Request moves from players as long as the game as is not in terminal states
         while self._status == TicTacToe.READY:
+            # Inform player ONCE about current state
+            self._players[self._whosturn].setState(self._boardstate)  # TODO: think about security
+
             # Request move from active player as long as invalid moves are selected
             while 1:
-                message = self._players[self._whosturn].requestTurnMessage()
-                if message is not None:
-                    self._visualizer.sendMessage(message)
-
                 move = self._players[self._whosturn].turn()
                 # Valid moves change the board state
                 if self.checkAndPlaceMove(move):
@@ -81,11 +80,11 @@ class TicTacToe:
             # After each move, send rewards where appropriate
             self.checkRewards()
 
-            # After each move, ask players if they want to see the state
+            # After each move, ask players if they want to see the state,
+            # This obviously informs players also about the final state
             for player in self._players:
-                if player.doYouNeedVisualization():
-                    self._visualizer.visualizeState(self._boardstate)
-                    break
+                if player.watchesState:
+                    player.setState(self._boardstate)
 
             # give turn to next player in cycle
             self._whosturn = (self._whosturn + 1) % 2
@@ -93,13 +92,14 @@ class TicTacToe:
         # End of while loop: Now the game is finished.
         # Ask the players if they want to see a message
         for idx, player in enumerate(self._players):
-            if player.doYouNeedMessage():
+            if player.readsMessages:
                 if self._status == idx:
                     message = player.name + ' hat gewonnen!\n'
                 elif self._status == TicTacToe.DRAW:
                     message = player.name + ' hat ein Unentschieden geholt!\n'
                 else:
                     message = player.name + ' hat leider verloren!\n'
+                player.
                 self._visualizer.writeMessage(message, player.playerNumber)
 
         # Let the players do "clean up" operations
