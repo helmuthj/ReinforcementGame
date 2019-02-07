@@ -54,7 +54,21 @@ class TicTacToe:
     # TODO: This loop could go into a separate class, the "game manager".
     def play(self):
         '''
-        Main "game loop"
+        Main "game loop" and terminal state handling.
+
+        The game loop cycles through the following steps:
+            1. Inform current player about current state
+            2. Request move from current player until he makes a valid choice
+            3. Update state (currently not a separate function !)
+            4. Check for terminal states
+            5. Send rewards if granted
+            6. Send players a state update if they want one
+            7. Switch to next player
+
+        Terminal state handling:
+            1. Send players a message
+            2. Notify players that they can
+
         :return:
         '''
 
@@ -89,7 +103,7 @@ class TicTacToe:
             # give turn to next player in cycle
             self._whosturn = (self._whosturn + 1) % 2
 
-        # End of while loop: Now the game is finished.
+        # End of while loop: The game is in terminal state.
         # Ask the players if they want to see a message
         for idx, player in enumerate(self._players):
             if player.readsMessages:
@@ -99,8 +113,7 @@ class TicTacToe:
                     message = player.name + ' hat ein Unentschieden geholt!\n'
                 else:
                     message = player.name + ' hat leider verloren!\n'
-                player.
-                self._visualizer.writeMessage(message, player.playerNumber)
+                player.sendMessage(message)
 
         # Let the players do "clean up" operations
         for player in self._players:
@@ -119,24 +132,21 @@ class TicTacToe:
         :return:
         '''
         if self._status == TicTacToe.READY:
-            # the board is in "ready" state, i.e. nobody has won yet:
+            # The board is in "ready" state, i.e. nobody has won yet:
             # Send the PREVIOUS player the DEFAULT reward; the current player has to wait for his
             # reward because his move might turn out to be a bad one.
             otherplayer = (self._whosturn + 1) % 2
             self._players[otherplayer].sendReward(TicTacToe.R_DEFAULT, tuple(self._boardstate))
         elif self._status == TicTacToe.WIN_PL0 or self._status == TicTacToe.WIN_PL1:
-            # there is a winner, i.e. the current player's move was a winning move
+            # There is a winner, i.e. the current player's move was a winning move
             winner = self._status
             loser = (winner + 1) % 2
             self._players[winner].sendReward(TicTacToe.R_WIN, None)
             self._players[loser].sendReward(TicTacToe.R_DEFEAT, None)
         elif self._status == TicTacToe.DRAW:
-            # this is a draw, i.e. the current player's move led to a draw
-            self._players[0].sendReward(TicTacToe.R_DRAW, None)
-            self._players[1].sendReward(TicTacToe.R_DRAW, None)
-
-    def returnState(self):
-        return tuple(self._boardstate)
+            # This is a draw, i.e. the current player's move led to a draw:
+            for player in self._players:
+                player.sendReward(TicTacToe.R_DRAW, None)
 
     def checkAndPlaceMove(self, move):
         '''

@@ -23,7 +23,7 @@ class HumanPlayerInterface:
         The player handles his own I/O device, the game should not bother.
     '''
 
-    def __init__(self, somename, someboard, somescreen):
+    def __init__(self, somename, somescreen):
         self._name = somename
         self._screen = somescreen
         self._boardstate = None
@@ -31,7 +31,7 @@ class HumanPlayerInterface:
         self._readsMessages = True
         self._reward = None
         # The screen tells the player once where it should send its messages to
-        self._playerNumber = self._screen.getPlayerLine()
+        self._playerNumber = self._screen.getPlayerLine()  # TODO: rename to line number
 
     @property
     def name(self):
@@ -53,14 +53,14 @@ class HumanPlayerInterface:
         # Only handle "technically" incorrect inputs here. Rule violations are handled by the game.
         while 1:
             try:
-                move = int(self._screen.requestInput(self._name + ' zieht: ', self._playerNumber))
+                action = int(self._screen.requestInput(self._name + ' zieht: ', self._playerNumber))
                 break
             except ValueError:
                 pass
-        return move
+        return action
 
     def sendReward(self, reward, resultingState):
-        self._reward = reward
+        pass
 
     def setState(self, state):
         self._boardstate = state
@@ -72,24 +72,41 @@ class HumanPlayerInterface:
     def finalize(self):
         pass
 
+
 class DumbAI:
 
-    def __init__(self, somename, someboard, experienceFile=None):
+    def __init__(self, somename, experienceFile=None):
         self._name = somename
-        self._board = someboard
         self._experienceFile = experienceFile
-        self._game = []
+        self._game = []  # TODO: Rename to trajectory aor something similar
         self._boardstate = None
         self._action = None
+        self._watchesState = False
+        self._readsMessages = False
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def watchesState(self):
+        return self._watchesState
+
+    @property
+    def readsMessages(self):
+        return self._readsMessages
+
+    def setState(self, state):
+        self._boardstate = state
 
     def turn(self):
-        # when asked to make a move, ask for the state, make smart bet,
-        # return move, store state and action
-        self._boardstate = self._board.returnState()
+        # select action, store, and return
         self._action = self.chooseAction(None)
         return self._action
 
-    def chooseAction(self, forbiddenmoves):
+    def chooseAction(self, forbiddenmoves=None):
+        # chooseAction() does NOT store the action? It could also be purely hypothetical action
+        # "forbiddenmoves" is currently an unused feature
         return random.randint(1, 9)
 
     def sendReward(self, reward, resultingState):
@@ -114,7 +131,7 @@ class SmartAI(DumbAI):
         self._ql = ql
         self._curiosity = curiosity
 
-    def chooseAction(self, forbiddenmoves):
+    def chooseAction(self, forbiddenmoves=None):
         # forbiddenmoves is currently unused
         return self._ql.selectAction(self._boardstate, self._curiosity)
 
