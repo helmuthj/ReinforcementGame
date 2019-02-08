@@ -23,15 +23,15 @@ class HumanPlayerInterface:
         The player handles his own I/O device, the game should not bother.
     '''
 
-    def __init__(self, somename, somescreen):
+    def __init__(self, somename, visualizer):
         self._name = somename
-        self._screen = somescreen
+        self._visualizer = visualizer
         self._boardstate = None
         self._watchesState = True
         self._readsMessages = True
         self._reward = None
         # The screen tells the player once where it should send its messages to
-        self._playerNumber = self._screen.getPlayerLine()  # TODO: rename to line number
+        self._playerNumber = self._visualizer.getPlayerLine()  # TODO: rename to line number
 
     @property
     def name(self):
@@ -53,7 +53,7 @@ class HumanPlayerInterface:
         # Only handle "technically" incorrect inputs here. Rule violations are handled by the game.
         while 1:
             try:
-                action = int(self._screen.requestInput(self._name + ' zieht: ', self._playerNumber))
+                action = int(self._visualizer.requestInput(self._name + ' zieht: ', self._playerNumber))
                 break
             except ValueError:
                 pass
@@ -64,10 +64,10 @@ class HumanPlayerInterface:
 
     def setState(self, state):
         self._boardstate = state
-        self._screen.visualizeState(self._boardstate)
+        self._visualizer.visualizeState(self._boardstate)
 
     def sendMessage(self, message):
-        self._screen.putMessage(message, self._playerNumber)
+        self._visualizer.putMessage(message, self._playerNumber)
 
     def finalize(self):
         pass
@@ -80,6 +80,7 @@ class DumbAI:
         self._experienceFile = experienceFile
         self._game = []  # TODO: Rename to trajectory aor something similar
         self._boardstate = None
+        self._actionstate = None
         self._action = None
         self._watchesState = False
         self._readsMessages = False
@@ -101,6 +102,7 @@ class DumbAI:
 
     def turn(self):
         # select action, store, and return
+        self._actionstate = self._boardstate
         self._action = self.chooseAction(None)
         return self._action
 
@@ -110,7 +112,7 @@ class DumbAI:
         return random.randint(1, 9)
 
     def sendReward(self, reward, resultingState):
-        experience = (self._boardstate, self._action, reward, resultingState)
+        experience = (self._actionstate, self._action, reward, resultingState)
         self._game.append(experience)
 
     def finalize(self):
@@ -126,15 +128,16 @@ class DumbAI:
 
 class SmartAI(DumbAI):
 
-    def __init__(self, somename, someboard, experienceFile, ql, curiosity=1.0):
-        DumbAI.__init__(self, somename, someboard, experienceFile)
+    def __init__(self, somename, experienceFile, ql, curiosity=1.0):
+        DumbAI.__init__(self, somename, experienceFile)
         self._ql = ql
         self._curiosity = curiosity
 
     def chooseAction(self, forbiddenmoves=None):
         # forbiddenmoves is currently unused
-        return self._ql.selectAction(self._boardstate, self._curiosity)
+        self._actionstate = self._boardstate
+        return self._ql.selectAction(self._actionstate, self._curiosity)
 
     def sendReward(self, reward, resultingState):
         super(SmartAI, self).sendReward(reward, resultingState)
-        self._ql.updateQ(self._boardstate, self._action, reward, resultingState)
+        self._ql.updateQ(self._actionstate, self._action, reward, resultingState)
