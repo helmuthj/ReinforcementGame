@@ -1,3 +1,15 @@
-__pycache__/**
+# Mac OS Stuff
 .DS_Store
-.idea/**
+
+# PyCharm Stuff
+.idea/
+.pycharm_helpers/
+
+# Test Stuff
+.cache/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
