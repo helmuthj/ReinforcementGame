@@ -4,6 +4,9 @@ import numpy
 
 
 class Qlearner:
+    # TODO: experiment with batch learn
+    # TODO: Think about symmetry, think about letting players 1 and 2 use the same learner
+    # TODO: Start using embedding
 
     def __init__(self, Qfile, possibleActions, default_reward, alpha, lam):
         self._Qfile = Qfile

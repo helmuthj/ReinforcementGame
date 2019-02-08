@@ -10,6 +10,10 @@ class TicTacToe:
         - checks after each move if the board is in a terminal states
         - sends rewards to players
         - knows a game-specific visualizer that it can ask to display state and messages
+
+        TODO: Use iterator instead of an index variable to indicate which player is the next.
+        TODO: Review how the state is communicated: who should make sure that it is a tuple?.
+
     '''
 
     # class-level constant for possible actions

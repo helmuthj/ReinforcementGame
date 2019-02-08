@@ -80,10 +80,6 @@ def practice(M):
         win1rate.append(win1)
         drawrate.append(draw)
 
-    #cumwin0 = numpy.cumsum([1 if r == 0 else 0 for r in result])
-    #cumwin1 = numpy.cumsum([1 if r == 1 else 0 for r in result])
-    #cumdraw = numpy.cumsum([1 if r == 2 else 0 for r in result])
-
     plt.plot(range(0, M), win0rate)
     plt.plot(range(0, M), win1rate)
     plt.plot(range(0, M), drawrate)
@@ -99,11 +95,16 @@ def cursesgame(scr):
     alpha = 0.0
     lam = 0.0
     curiosity = 0
-    ql0 = Qlearner('Q0.pkl', possibleActions, alpha, lam)
-    ql1 = Qlearner('Q1.pkl', possibleActions, alpha, lam)
-    pls = [HumanPlayerInterface('Janne', visualizer), SmartAI('Smart AI', None, ql1, curiosity)]
-    #pls = [HumanPlayerInterface('Janne', b, visualizer),
-    #  HumanPlayerInterface('Jo', b, visualizer)]
+    ql0 = Qlearner('Q0.pkl', possibleActions, TicTacToe.R_DEFAULT, alpha=0.1, lam=0.5)
+    ql1 = Qlearner('Q1.pkl', possibleActions, TicTacToe.R_DEFAULT, alpha=0.1, lam=0.5)
+
+    sP0 = SmartAI('Smart AI 0', None, ql0, curiosity=0)
+    sP1 = SmartAI('Smart AI 1', None, ql1, curiosity=0)
+
+    Jo = HumanPlayerInterface('Jo', visualizer)
+
+    pls = [Jo, sP1]
+
     board.setplayers(pls)
 
     while 1:
@@ -122,5 +123,5 @@ def cursesgame(scr):
 
 
 if __name__ == '__main__':
-    practice(10000)
-    #wrapper(cursesgame)
+    #practice(10000)
+    wrapper(cursesgame)
