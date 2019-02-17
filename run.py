@@ -4,10 +4,10 @@ import pickle
 from curses import wrapper
 import matplotlib.pyplot as plt
 
-from Games import TicTacToe
+from Games import TicTacToe, VierGewinnt
 from Learners import Qlearner
 from Players import DumbAI, SmartAI, HumanPlayerInterface
-from Visualizers import TicTacToeVisualizer
+from Visualizers import TicTacToeVisualizer, VierGewinntVisualizer
 
 
 def loadGames(gamesFile):
@@ -36,8 +36,9 @@ def practice(M):
 
     board = TicTacToe()
     possibleActions = TicTacToe.POSSIBLE_ACTIONS
-    ql0 = Qlearner('Q0.pkl', possibleActions, TicTacToe.R_DEFAULT, alpha=0.1, lam=0.5)
-    ql1 = Qlearner('Q1.pkl', possibleActions, TicTacToe.R_DEFAULT, alpha=0.1, lam=0.5)
+    defaultReward = TicTacToe.R_DEFAULT
+    ql0 = Qlearner('Q0.pkl', possibleActions, defaultReward, alpha=0.1, lam=0.5)
+    ql1 = Qlearner('Q1.pkl', possibleActions, defaultReward, alpha=0.1, lam=0.5)
     sL0 = SmartAI('Smart AI 0', None, ql0, curiosity=0.25)
     sL1 = SmartAI('Smart AI 1', None, ql1, curiosity=0.25)
     sP0 = SmartAI('Smart AI 0', None, ql0, curiosity=0)
@@ -87,7 +88,7 @@ def practice(M):
     plt.show()
 
 
-def cursesgame(scr):
+def interactive_tictactoe(scr):
     random.seed(time.time())
     visualizer = TicTacToeVisualizer(scr, 3, 2)
     board = TicTacToe()
@@ -122,6 +123,48 @@ def cursesgame(scr):
     time.sleep(1)
 
 
+def interactive_viergewinnt(scr):
+    random.seed(time.time())
+    visualizer = VierGewinntVisualizer(scr, 4, 2)
+    board = VierGewinnt()
+    possibleActions = VierGewinnt.POSSIBLE_ACTIONS
+
+    Jo = HumanPlayerInterface('Jo', visualizer)
+    Birte = HumanPlayerInterface('Birte', visualizer)
+
+    pls = [Jo, Birte]
+
+    board.setplayers(pls)
+
+    while 1:
+        board.play()
+        while 1:
+            c = visualizer.requestInput('Noch mal spielen (j / n)?', 1)
+            if c == 'j' or c == 'n':
+                break
+        if c == 'n':
+            break
+        else:
+            visualizer.clear()
+            board.reset()
+
+    time.sleep(1)
+
+
 if __name__ == '__main__':
     #practice(10000)
-    wrapper(cursesgame)
+    wrapper(interactive_viergewinnt)
+
+    # TODO: do something with this legacy timing code.
+    # pr = cProfile.Profile()
+    # pr.enable()
+
+    #practice(100000)
+    # wrapper(cursesgame)
+
+    # pr.disable()
+    # s = io.StringIO()
+    # sortby = 'tottime'
+    # ps = pstats.Stats(pr, stream=s)
+    # ps.strip_dirs().sort_stats(sortby).print_stats()
+    # print(s.getvalue())
