@@ -88,14 +88,71 @@ def practice(M):
     plt.show()
 
 
+def practice_vg(M):
+    # online practicing
+    random.seed(time.time())
+
+    board = VierGewinnt()
+    possibleActions = VierGewinnt.POSSIBLE_ACTIONS
+    defaultReward = VierGewinnt.R_DEFAULT
+    ql0 = Qlearner('Q0vg.pkl', possibleActions, defaultReward, alpha=0.1, lam=0.5)
+    ql1 = Qlearner('Q1vg.pkl', possibleActions, defaultReward, alpha=0.1, lam=0.5)
+    sL0 = SmartAI('Smart AI 0', None, ql0, curiosity=0.25)
+    sL1 = SmartAI('Smart AI 1', None, ql1, curiosity=0.25)
+    sP0 = SmartAI('Smart AI 0', None, ql0, curiosity=0)
+    sP1 = SmartAI('Smart AI 1', None, ql1, curiosity=0)
+    dP0 = DumbAI('Dumb AI 0', None)
+    dP1 = DumbAI('Dumb AI 1', None)
+
+    pls = [sL0, sL1]
+
+    board.setplayers(pls)
+
+    result = []
+    for i in range(0, M):
+        board.reset()
+        board.play()
+        result.append(board._status)
+
+    ql0.saveQ()
+    ql1.saveQ()
+
+    win0, win0rate = 0, []
+    win1, win1rate = 0, []
+    draw, drawrate = 1, []
+    alpha = 0.995
+    for i, r in enumerate(result):
+        if r == 0:
+            win0 = win0*alpha + (1 - alpha)
+            win1 = win1*alpha
+            draw = draw*alpha
+        elif r == 1:
+            win0 = win0 * alpha
+            win1 = win1 * alpha + (1 - alpha)
+            draw = draw * alpha
+        elif r == 2:
+            win0 = win0 * alpha
+            win1 = win1 * alpha
+            draw = draw * alpha + (1 - alpha)
+
+        win0rate.append(win0)
+        win1rate.append(win1)
+        drawrate.append(draw)
+
+    plt.plot(range(0, M), win0rate)
+    plt.plot(range(0, M), win1rate)
+    plt.plot(range(0, M), drawrate)
+    plt.legend(['win 0', 'win 1', 'draw'])
+    plt.show()
+
+
+
 def interactive_tictactoe(scr):
     random.seed(time.time())
     visualizer = TicTacToeVisualizer(scr, 3, 2)
     board = TicTacToe()
     possibleActions = TicTacToe.POSSIBLE_ACTIONS
-    alpha = 0.0
-    lam = 0.0
-    curiosity = 0
+
     ql0 = Qlearner('Q0.pkl', possibleActions, TicTacToe.R_DEFAULT, alpha=0.1, lam=0.5)
     ql1 = Qlearner('Q1.pkl', possibleActions, TicTacToe.R_DEFAULT, alpha=0.1, lam=0.5)
 
@@ -132,7 +189,14 @@ def interactive_viergewinnt(scr):
     Jo = HumanPlayerInterface('Jo', visualizer)
     Birte = HumanPlayerInterface('Birte', visualizer)
 
-    pls = [Jo, Birte]
+
+    ql0 = Qlearner('Q0vg.pkl', possibleActions, TicTacToe.R_DEFAULT, alpha=0.1, lam=0.5)
+    ql1 = Qlearner('Q1vg.pkl', possibleActions, TicTacToe.R_DEFAULT, alpha=0.1, lam=0.5)
+
+    sP0 = SmartAI('Smart AI 0', None, ql0, curiosity=0)
+    sP1 = SmartAI('Smart AI 1', None, ql1, curiosity=0)
+
+    pls = [sP0, Birte]
 
     board.setplayers(pls)
 
@@ -152,7 +216,7 @@ def interactive_viergewinnt(scr):
 
 
 if __name__ == '__main__':
-    #practice(10000)
+    #practice_vg(100000)
     wrapper(interactive_viergewinnt)
 
     # TODO: do something with this legacy timing code.

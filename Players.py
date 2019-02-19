@@ -78,9 +78,9 @@ class DumbAI:
     def __init__(self, somename, experienceFile=None):
         self._name = somename
         self._experienceFile = experienceFile
-        self._game = []  # TODO: Rename to trajectory aor something similar
+        self._game = []  # TODO: Rename to trajectory or something similar
         self._boardstate = None
-        self._actionstate = None # TODO: Check if "_actionstate" can be removed"
+        self._actionstate = None  # TODO: Check if "_actionstate" can be removed"
         self._action = None
         self._watchesState = False
         self._readsMessages = False

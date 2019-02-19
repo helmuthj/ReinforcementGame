@@ -59,6 +59,8 @@ class TicTacToe:
         self._previousturn = None
         self._status = TicTacToe.READY
 
+    # TODO: define state2tuple and use it throughout when state is passed out
+
     def play(self):
         '''
         Main "game loop" and terminal state handling.
@@ -236,6 +238,13 @@ class VierGewinnt:
                         (( 3,  3), ( 2,  2), ( 1,  1)),  # north east
                         (( 2,  2), ( 1,  1), (-1, -1)),  # north east
                         (( 1,  1), (-1, -1), (-2, -2)))  # north east
+
+    # TODO: Investigate why this is a winner for "o"
+    #    -----
+    #    ---x-
+    #    ---x-
+    #    oooxo
+
         self._column_cnt = [0] * self._Ncols
         self._status = VierGewinnt.NOT_READY
         self._whosturn = None
@@ -282,7 +291,7 @@ class VierGewinnt:
         # Request moves from players as long as the game as is not in terminal states
         while self._status == VierGewinnt.READY:
             # Inform player ONCE about current state
-            self._players[self._whosturn].setState(tuple(self._boardstate))
+            self._players[self._whosturn].setState(self.state2tuple())
 
             # Request move from active player as long as invalid moves are selected
             while 1:
@@ -305,7 +314,7 @@ class VierGewinnt:
             # This obviously informs players also about the final state
             for player in self._players:
                 if player.watchesState:
-                    player.setState(self._boardstate)
+                    player.setState(self.state2tuple())
 
             # give turn to next player in cycle
             self._previousturn = self._whosturn
@@ -346,7 +355,7 @@ class VierGewinnt:
             # reward because his move might turn out to be a bad one.
             if self._previousturn is not None:
                 self._players[self._previousturn].sendReward(TicTacToe.R_DEFAULT,
-                                                             tuple(self._boardstate))
+                                                             self.state2tuple())
         elif self._status == VierGewinnt.WIN_PL0 or self._status == VierGewinnt.WIN_PL1:
             # There is a winner, i.e. the current player's move was a winning move
             winner = self._status
