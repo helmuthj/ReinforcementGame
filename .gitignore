@@ -8,6 +8,13 @@
 # Test Stuff
 .cache/
 
+# Do not commit data or models
+models/**
+
+# But keep folder structure
+!models/**/
+!models/**/.gitkeep
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
