@@ -1,9 +1,10 @@
 # TODO: Remove the stupid hard-coded numbers: What is "5", what is "9"...
-
 # TODO: In a way, the Visualizer needs to know the size of the board -> couple with Games.py?
+
+
 class TicTacToeVisualizer:
-    def __init__(self, stdscr, Nb, Np):
-        self._screen = stdscr  # a "curses" screen as created by wrapper() in curses module
+    def __init__(self, Nb, Np):
+        self._screen = None  # a "curses" screen as created by wrapper() in curses module
         self._Nb = Nb       # number of lines reserved for board
         self._Np = Np       # number of lines reserved for messages to players
         self._board_strs = [''] * self._Nb
@@ -11,6 +12,14 @@ class TicTacToeVisualizer:
         self._symbols = ['o', 'x', '-']
         self._boardstate = None
         self._nextLine = 0
+
+    @property
+    def screen(self):
+        return self._screen
+
+    @screen.setter
+    def screen(self, scr):
+        self._screen = scr
         self._screen.clear()
 
     # I don't think this is needed ...
@@ -72,10 +81,11 @@ class TicTacToeVisualizer:
     def clear(self):
         self._screen.clear()
 
+
 # TODO: In a way, the Visualizer needs to know the size of the board -> couple with Games.py?
 class VierGewinntVisualizer:
-    def __init__(self, stdscr, Nb, Np):
-        self._screen = stdscr  # a "curses" screen as created by wrapper() in curses module
+    def __init__(self, Nb, Np):
+        self._screen = None  # a "curses" screen as created by wrapper() in curses module
         self._Nb = Nb       # number of lines reserved for board
         self._Np = Np       # number of lines reserved for messages to players
         self._board_strs = [''] * self._Nb
@@ -83,6 +93,14 @@ class VierGewinntVisualizer:
         self._symbols = ['o', 'x', '-']
         self._boardstate = None
         self._nextLine = 0
+
+    @property
+    def screen(self):
+        return self._screen
+
+    @screen.setter
+    def screen(self, scr):
+        self._screen = scr
         self._screen.clear()
 
     # I don't think this is needed ...
