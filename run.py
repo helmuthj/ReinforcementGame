@@ -102,23 +102,24 @@ def curses_game(scr, board, visualizer):
 
 if __name__ == '__main__':
     #board = VierGewinnt()
-    #practice(200000, board, 'QVierGewinnt.pkl', None)
+    #practice(100000, board, 'QVierGewinnt.pkl', None)
 
-    board = TicTacToe()
-    visualizer = TicTacToeVisualizer(3, 2)
-    Qfile = 'models/QTicTacToe.pkl'
+    #board = TicTacToe()
+    #visualizer = TicTacToeVisualizer(3, 2)
+    #Qfile = 'models/QTicTacToe.pkl'
 
-    #board = VierGewinnt()
-    #visualizer = VierGewinntVisualizer(5, 2)
-    #Qfile = 'models/QVierGewinnt.pkl'
+    board = VierGewinnt()
+    visualizer = VierGewinntVisualizer(5, 2)
+    Qfile = 'models/QVierGewinnt.pkl'
 
     possibleActions = board.POSSIBLE_ACTIONS
     default_reward = board.R_DEFAULT
     ql0 = Qlearner(Qfile, possibleActions, default_reward, alpha=0.1, lam=0.5)
-    sP0 = SmartAI('Smart AI 0', None, ql0, curiosity=0.1)
+    sP0 = SmartAI('Smart AI 0', None, ql0, curiosity=0.0)
 
-    Jo = HumanPlayerInterface('Jo', visualizer)
-    pls = [sP0, Jo]
+    Lotte = HumanPlayerInterface('Lotte', visualizer)
+    #Birte = HumanPlayerInterface('Birte', visualizer)
+    pls = [Lotte, sP0]
     board.setplayers(pls)
 
     wrapper(curses_game, board, visualizer)

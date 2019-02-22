@@ -6,6 +6,7 @@ import numpy
 class Qlearner:
     # TODO: experiment with batch learn
     # TODO: Start using embedding
+    # TODO: Experiment with only learning after the game has finished
 
     def __init__(self, Qfile, possibleActions, default_reward, alpha, lam):
         self._Qfile = Qfile

@@ -221,6 +221,7 @@ class VierGewinnt:
     DRAW = 2
 
     def __init__(self):
+        # TODO: remove redundant NCOLS/_Ncols
         self._Ncols = VierGewinnt.NCOLS
         self._Nrows = VierGewinnt.NROWS
         # note that the first index is for column, the second for row
@@ -233,11 +234,13 @@ class VierGewinnt:
                         (( 0,  1), ( 0, -2), ( 0, -1)),  # mostly west
                         (( 0, -1), ( 0,  2), ( 0,  1)),  # mostly east
                         (( 3, -3), ( 2, -2), ( 1, -1)),  # north west
-                        (( 2, -2), ( 1, -1), (-1,  1)),  # north west
-                        (( 1, -1), (-1,  1), (-2,  2)),  # north west
+                        (( 2, -2), ( 1, -1), (-1,  1)),  # mostly north west
+                        (( 1, -1), (-1,  1), (-2,  2)),  # mostly south east
                         (( 3,  3), ( 2,  2), ( 1,  1)),  # north east
-                        (( 2,  2), ( 1,  1), (-1, -1)),  # north east
-                        (( 1,  1), (-1, -1), (-2, -2)))  # north east
+                        (( 2,  2), ( 1,  1), (-1, -1)),  # mostly north east
+                        (( 1,  1), (-1, -1), (-2, -2)))  # mostly south west
+                        # North: (1,0) South: (-1,0)
+                        # West:  (0,-1), East (0,1)
 
     # TODO: Investigate why this is a winner for "o"
     #    -----
@@ -400,6 +403,10 @@ class VierGewinnt:
             won = True
             for shift in shifts:
                 try:
+                    i = idxrow + shift[0]
+                    j = idxcol + shift[1]
+                    if i < 0 or i >= self.NROWS or j < 0 or j >= self.NROWS:
+                        raise IndexError
                     if self._boardstate[idxrow+shift[0]][idxcol+shift[1]] != player:
                         won = False
                         break
@@ -411,6 +418,75 @@ class VierGewinnt:
                 # we could not find a wrong stone --> a win by the "player" who put the last stone
                 self._status = player
                 break
+
+    def checkwon2(self, lastmove):
+        # find location of last set stone and try all variants around it
+        for idxcol in range(0, self._Ncols):
+            for idxrow in range(0, self._Nrows):
+                player = self._boardstate[idxrow][idxcol]
+                # test four directions:
+                # +row
+                won = False
+                if player != VierGewinnt.UNMARKED:
+                    won = True
+                    for offset in range(1, 4):
+                        try:
+                            if self._boardstate[idxrow + offset][idxcol] != player:
+                                won = False
+                                break
+                        except IndexError:
+                            won = False
+                            break
+                    if won:
+                        break
+
+                    # +col
+                    won = True
+                    for offset in range(1, 4):
+                        try:
+                            if self._boardstate[idxrow][idxcol + offset] != player:
+                                won = False
+                                break
+                        except IndexError:
+                            won = False
+                            break
+                    if won:
+                        break
+
+                    # +row / +col
+                    won = True
+                    for offset in range(1, 4):
+                        try:
+                            if self._boardstate[idxrow + offset][idxcol + offset] != player:
+                                won = False
+                                break
+                        except IndexError:
+                            won = False
+                            break
+                    if won:
+                        break
+
+                    # +row / -col
+                    won = True
+                    for offset in range(1, 4):
+                        try:
+                            if self._boardstate[idxrow + offset][idxcol - offset] != player:
+                                won = False
+                                break
+                        except IndexError:
+                            won = False
+                            break
+                    if won:
+                        break
+
+            if won:
+                # for at least one of the tested set of shifts (e.g. a south west diagonal),
+                # we could not find a wrong stone --> a win by the "player" who put the last stone
+                self._status = player
+                break
+
+
+
 
     def checkdraw(self):
         if self._status == VierGewinnt.READY:
