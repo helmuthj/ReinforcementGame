@@ -196,22 +196,24 @@ class TicTacToe:
 
 class VierGewinnt:
 
-    # class-level constant for possible actions
-    POSSIBLE_ACTIONS = range(1, 6)
-
+    # TODO: justify the values of the rewards.
+    # NOTE: Only those rewards that are greater than R_DEFAULT get back-propagated (...max(Q)...)
     # class-level constants for rewards
-    R_INVALID = 0
-    R_DEFEAT = 1
-    R_DEFAULT = 2
-    R_DRAW = 2.5
-    R_WIN = 8
+    R_INVALID = -2
+    R_DEFEAT = -1
+    R_DEFAULT = 0
+    R_DRAW = 0
+    R_WIN = 1
 
     # class-level board constants
     MARKED_PL0 = 0
     MARKED_PL1 = 1
     UNMARKED = 2
     NCOLS = 5
-    NROWS = 4
+    NROWS = 5
+
+    # class-level constant for possible actions
+    POSSIBLE_ACTIONS = range(1, NCOLS+1)
 
     # class level game status constant
     NOT_READY = -2
@@ -221,11 +223,8 @@ class VierGewinnt:
     DRAW = 2
 
     def __init__(self):
-        # TODO: remove redundant NCOLS/_Ncols
-        self._Ncols = VierGewinnt.NCOLS
-        self._Nrows = VierGewinnt.NROWS
         # note that the first index is for column, the second for row
-        self._boardstate = [[VierGewinnt.UNMARKED for j in range(self._Ncols)] for i in range(self._Nrows)]
+        self._boardstate = [[VierGewinnt.UNMARKED for j in range(self.NCOLS)] for i in range(self.NROWS)]
         self._winner = ((( 0, -3), ( 0, -2), ( 0, -1)),  # west
                         ((-3, -3), (-2, -2), (-1, -1)),  # south west
                         ((-3,  0), (-2,  0), (-1,  0)),  # south
@@ -239,16 +238,8 @@ class VierGewinnt:
                         (( 3,  3), ( 2,  2), ( 1,  1)),  # north east
                         (( 2,  2), ( 1,  1), (-1, -1)),  # mostly north east
                         (( 1,  1), (-1, -1), (-2, -2)))  # mostly south west
-                        # North: (1,0) South: (-1,0)
-                        # West:  (0,-1), East (0,1)
 
-    # TODO: Investigate why this is a winner for "o"
-    #    -----
-    #    ---x-
-    #    ---x-
-    #    oooxo
-
-        self._column_cnt = [0] * self._Ncols
+        self._column_cnt = [0] * self.NCOLS
         self._status = VierGewinnt.NOT_READY
         self._whosturn = None
         self._previousturn = None
@@ -265,8 +256,8 @@ class VierGewinnt:
     def reset(self):
         # TODO: remove stupid double loop
         self._boardstate = \
-            [[VierGewinnt.UNMARKED for j in range(self._Ncols)] for i in range(self._Nrows)]
-        self._column_cnt = [0] * self._Ncols
+            [[VierGewinnt.UNMARKED for j in range(self.NCOLS)] for i in range(self.NCOLS)]
+        self._column_cnt = [0] * self.NCOLS
         self._whosturn = 0
         self._status = VierGewinnt.READY
 
@@ -297,6 +288,7 @@ class VierGewinnt:
             self._players[self._whosturn].setState(self.state2tuple())
 
             # Request move from active player as long as invalid moves are selected
+            cntInvalid = 0
             while 1:
                 move = self._players[self._whosturn].turn()
                 # Valid moves change the board state
@@ -304,6 +296,10 @@ class VierGewinnt:
                     break
                 # Invalid moves get sanctioned with an instant bad reward
                 else:
+                    cntInvalid += 1
+                    if cntInvalid >= 100:
+                        print(self._boardstate)
+                        raise Exception('Endless loop')
                     self._players[self._whosturn].sendReward(VierGewinnt.R_INVALID, None)
 
             # After each move, check for terminal states ("won", "draw")
@@ -350,6 +346,13 @@ class VierGewinnt:
             move to win: INSTANT big/small reward for winner/loser
             move to draw: INSTANT reward that is slightly better than default for both players
             open game: default reward IN NEXT ROUND if the next move doesn't terminate the game
+        A note on "resultingState" that is send to sendReward():
+            The idea is that the Q-function update should make a compromise between immediate and $
+            possible future rewards of an action. For the future rewards, it hence needs to know the
+            resulting state for an action.
+            If the resulting state is a terminal state, there is no further future reward possible.
+            That's why we send "None". We adhere to this convention inside updateQ(), where the
+            "None"-case is handled in a special way.
         :return:
         '''
         if self._status == VierGewinnt.READY:
@@ -357,7 +360,7 @@ class VierGewinnt:
             # Send the PREVIOUS player the DEFAULT reward; the current player has to wait for his
             # reward because his move might turn out to be a bad one.
             if self._previousturn is not None:
-                self._players[self._previousturn].sendReward(TicTacToe.R_DEFAULT,
+                self._players[self._previousturn].sendReward(VierGewinnt.R_DEFAULT,
                                                              self.state2tuple())
         elif self._status == VierGewinnt.WIN_PL0 or self._status == VierGewinnt.WIN_PL1:
             # There is a winner, i.e. the current player's move was a winning move
@@ -384,7 +387,7 @@ class VierGewinnt:
         else:
             idxcol = move - 1
             idxrow = self._column_cnt[idxcol]
-            if idxrow >= self._Nrows:
+            if idxrow >= self.NROWS:
                 # illegal move: row is full
                 return False
             else:
@@ -405,9 +408,9 @@ class VierGewinnt:
                 try:
                     i = idxrow + shift[0]
                     j = idxcol + shift[1]
-                    if i < 0 or i >= self.NROWS or j < 0 or j >= self.NROWS:
+                    if i < 0 or i >= self.NROWS or j < 0 or j >= self.NCOLS:
                         raise IndexError
-                    if self._boardstate[idxrow+shift[0]][idxcol+shift[1]] != player:
+                    if self._boardstate[i][j] != player:
                         won = False
                         break
                 except IndexError:
@@ -418,75 +421,6 @@ class VierGewinnt:
                 # we could not find a wrong stone --> a win by the "player" who put the last stone
                 self._status = player
                 break
-
-    def checkwon2(self, lastmove):
-        # find location of last set stone and try all variants around it
-        for idxcol in range(0, self._Ncols):
-            for idxrow in range(0, self._Nrows):
-                player = self._boardstate[idxrow][idxcol]
-                # test four directions:
-                # +row
-                won = False
-                if player != VierGewinnt.UNMARKED:
-                    won = True
-                    for offset in range(1, 4):
-                        try:
-                            if self._boardstate[idxrow + offset][idxcol] != player:
-                                won = False
-                                break
-                        except IndexError:
-                            won = False
-                            break
-                    if won:
-                        break
-
-                    # +col
-                    won = True
-                    for offset in range(1, 4):
-                        try:
-                            if self._boardstate[idxrow][idxcol + offset] != player:
-                                won = False
-                                break
-                        except IndexError:
-                            won = False
-                            break
-                    if won:
-                        break
-
-                    # +row / +col
-                    won = True
-                    for offset in range(1, 4):
-                        try:
-                            if self._boardstate[idxrow + offset][idxcol + offset] != player:
-                                won = False
-                                break
-                        except IndexError:
-                            won = False
-                            break
-                    if won:
-                        break
-
-                    # +row / -col
-                    won = True
-                    for offset in range(1, 4):
-                        try:
-                            if self._boardstate[idxrow + offset][idxcol - offset] != player:
-                                won = False
-                                break
-                        except IndexError:
-                            won = False
-                            break
-                    if won:
-                        break
-
-            if won:
-                # for at least one of the tested set of shifts (e.g. a south west diagonal),
-                # we could not find a wrong stone --> a win by the "player" who put the last stone
-                self._status = player
-                break
-
-
-
 
     def checkdraw(self):
         if self._status == VierGewinnt.READY:

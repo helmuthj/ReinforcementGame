@@ -84,7 +84,11 @@ class TicTacToeVisualizer:
 
 # TODO: In a way, the Visualizer needs to know the size of the board -> couple with Games.py?
 class VierGewinntVisualizer:
+    NCOLS = 5
+    NROWS = 5
+
     def __init__(self, Nb, Np):
+        # TODO: revisit the Nb and Np parameters: really needed?
         self._screen = None  # a "curses" screen as created by wrapper() in curses module
         self._Nb = Nb       # number of lines reserved for board
         self._Np = Np       # number of lines reserved for messages to players
@@ -106,13 +110,12 @@ class VierGewinntVisualizer:
     # I don't think this is needed ...
     def refresh(self):
         # draw board
-        NROWS = 4
         for (idx, line) in enumerate(self._board_strs):
-            self._screen.addstr(NROWS+2+idx, NROWS+2, line)
+            self._screen.addstr(self.NROWS+2+idx, self.NROWS+2, line)
 
         # show messages
         for (idx, line) in enumerate(self._message_strs):
-            self._screen.addstr(NROWS+2+self._Nb+idx+1, NROWS+2, line)
+            self._screen.addstr(self.NROWS+2+self._Nb+idx+1, self.NROWS+2, line)
 
         self._screen.refresh()
 
@@ -125,9 +128,8 @@ class VierGewinntVisualizer:
             raise Exception('Not enough space for all the lines you want to write.')
 
     def putMessage(self, message_str, idx):
-        NROWS = 4
         self._message_strs[idx] = message_str
-        self._screen.addstr(NROWS+2 + self._Nb + idx + 1, NROWS+2, message_str)
+        self._screen.addstr(self.NROWS+2 + self._Nb + idx + 1, self.NROWS+2, message_str)
         self._screen.refresh()
 
     def requestInput(self, message_str, idx):
@@ -137,13 +139,11 @@ class VierGewinntVisualizer:
 
     def visualizeState(self, state):
         self._boardstate = state
-        NROWS = 4
-        NCOLS = 5
         lines = []
         # plot from top to bottom: higher idxrow comes first
-        for idxrow in range(NROWS - 1, -1, -1):
+        for idxrow in range(self.NROWS - 1, -1, -1):
             line = ''
-            for idxcol in range(0, NCOLS):
+            for idxcol in range(0, self.NCOLS):
                 line += self._symbols[self._boardstate[idxrow][idxcol]]
             lines.append(line)
 
@@ -152,9 +152,8 @@ class VierGewinntVisualizer:
         self.putBoard()
 
     def putBoard(self):
-        NROWS = 4
         for (idx, line) in enumerate(self._board_strs):
-            self._screen.addstr(NROWS+2+idx, NROWS+2, line)
+            self._screen.addstr(self.NROWS+2+idx, self.NROWS+2, line)
 
         self._screen.refresh()
 

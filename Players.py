@@ -101,11 +101,13 @@ class DumbAI:
         self._boardstate = state
 
     def turn(self):
-        # select action, store, and return
+        # remember in which state the board was when action was chosen
         self._actionstate = self._boardstate
+        # select action, store, and return
         self._action = self.chooseAction(None)
         return self._action
 
+    # TODO: remove hard-coded range of possible moves: this is not game-agnostic
     def chooseAction(self, forbiddenmoves=None):
         # chooseAction() does NOT store the action? It could also be purely hypothetical action
         # "forbiddenmoves" is currently an unused feature
@@ -135,9 +137,17 @@ class SmartAI(DumbAI):
 
     def chooseAction(self, forbiddenmoves=None):
         # forbiddenmoves is currently unused
-        self._actionstate = self._boardstate
         return self._ql.selectAction(self._actionstate, self._curiosity)
 
     def sendReward(self, reward, resultingState):
         super(SmartAI, self).sendReward(reward, resultingState)
-        self._ql.updateQ(self._actionstate, self._action, reward, resultingState)
+        # In order to avoid endless loops, I need to have this update here
+        if resultingState is None:
+            self._ql.updateQ(self._actionstate, self._action, reward, resultingState)
+
+    def finalize(self):
+        self._ql.batchlearnQ([self._game], 1, backprop=True)
+        # reset
+        self._game = []
+        self._boardstate = None
+        self._action = None

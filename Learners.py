@@ -1,12 +1,10 @@
 import pickle
 import os
-import numpy
+import numpy as np
 
 
 class Qlearner:
-    # TODO: experiment with batch learn
     # TODO: Start using embedding
-    # TODO: Experiment with only learning after the game has finished
 
     def __init__(self, Qfile, possibleActions, default_reward, alpha, lam):
         self._Qfile = Qfile
@@ -34,18 +32,22 @@ class Qlearner:
     def selectAction(self, S, curiosity=None):
         # Compute Qs of all possible actions and select the best.
         # There might be some randomness involved
-
         Q = [self.Q((S, a)) for a in self._possibleActions]
-        if curiosity is None or curiosity <= 0:
+        if curiosity is None or curiosity < 0:
             m = max(Q)
             Praw = [1 if q == m else 0 for q in Q]
         else:
-            kappa = 1.0/curiosity
-            Praw = [q**kappa for q in Q]
+            # Boltzmann distribution fopr action selection
+            # q = -E, positive energy-->forbidden move or defeat-->prob=0
+            kbT = curiosity + 0.01
+            Praw = [np.exp(q/kbT) for q in Q]
 
         sumP = sum(Praw)
-        P = [p/sumP for p in Praw]
-        a = numpy.random.choice(self._possibleActions, p=P)
+        if sumP != 0:
+            P = [p/sumP for p in Praw]
+        else:
+            P = [1/len(Praw)]*len(Praw)
+        a = np.random.choice(self._possibleActions, p=P)
         return a
 
     def updateQ(self, S, a, r, nextS):
@@ -56,7 +58,7 @@ class Qlearner:
                 self._knownQs[Sa] = (1 - self._alpha) * self.Q(Sa) \
                                     + self._alpha * (r + self._lam * self._maxQ(nextS))
             else:
-                self._knownQs[Sa] = r
+                self._knownQs[Sa] = (1 - self._alpha) * self.Q(Sa) + self._alpha * r
 
     def batchlearnQ(self, games, repeat, backprop=False):
         # Goal: update Q((S, a)) for all experiences (S, a, r, nextS)
@@ -66,10 +68,10 @@ class Qlearner:
             for game in games:
                 Nx = len(game)
                 if backprop:
-                    r = range(Nx - 2, -1, -1)
+                    learning_order = range(Nx - 1, -1, -1)
                 else:
-                    r = range(0, Nx - 1)
-                for i in r:
+                    learning_order = range(0, Nx)
+                for i in learning_order:
                     experience = game[i]
                     S = experience[0]
                     a = experience[1]
